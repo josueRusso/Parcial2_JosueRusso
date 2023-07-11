@@ -12,7 +12,7 @@ namespace Parcial2_JosueRusso.Shared
         [Key]
         public int ProductoId { get; set; }
 
-        public string? Descripcion { get; set; }
+        public string Descripcion { get; set; }
 
         public int Tipo { get; set; }
 

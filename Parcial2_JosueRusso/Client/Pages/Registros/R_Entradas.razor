@@ -7,7 +7,54 @@
 
     public int EntradaId { get; set; }
 
-    public Entradas Entradas {}
+    public Entradas Entradas { get; set; } = new Entradas();
+
+    public EntradasDetalle EntradasDetalle { get; set; } = new EntradasDetalle();
+
+    public int detalleid = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (EntradaId > 0)
+        {
+            this.Entradas.EntradaId = EntradaId;
+            await Buscar();
+        }
+    }
+
+    public async Task Buscar()
+    {
+        var buscar = await httpClient.GetFromJsonAsync<Entradas>($"api/Entradas/{Entradas.EntradaId}");
+        if (buscar != null)
+        {
+            this.Entradas = buscar;
+            StateHasChanged();
+        }
+        else
+        {
+            notificationService.ShowNotification(
+                titulo: "Error de Busqueda",
+                mensaje: "El campo no Existe",
+                NotificationSeverity.Error
+        );
+        }
+    }
+
+    public async void Guadar()
+    {
+        using var error = await httpClient.PostAsJsonAsync<Entradas>("api/Entradas", Entradas);
+        if (!error.IsSuccessStatusCode)
+        {
+            return;
+            notificationService.ShowNotification(
+                titulo: "Error de Guardado",
+                mensaje: "El campo no se pudo guardar",
+                NotificationSeverity.Error
+
+            );
+        }
+
+    }
 
 
 }
