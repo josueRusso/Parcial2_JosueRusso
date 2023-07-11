@@ -38,24 +38,19 @@
                 </div>
 
 
-
-
-
-
+               
                 
- 
-
-            </div>
-            <div class="card-footer d-flex justify-content-center">
-                <div class="btn-group">
-                    <button type="button" class="btn btn-outline-primary" @onclick="Nuevo">Nuevo <i class="oi oi-file" /></button>
-                    <button type="submit" class="btn btn-outline-success">Guardar <i class="oi oi-document" /></button>
-                    <button type="button" class="btn btn-outline-danger" @onclick="Eliminar">Eliminar <i class="oi oi-trash" /></button>
+                
+                <div class="card-footer d-flex justify-content-center">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary" @onclick="Nuevo">Nuevo <i class="oi oi-file" /></button>
+                        <button type="submit" class="btn btn-outline-success">Guardar <i class="oi oi-document" /></button>
+                        <button type="button" class="btn btn-outline-danger" @onclick="Eliminar">Eliminar <i class="oi oi-trash" /></button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-
 
 </EditForm>
 
@@ -65,7 +60,7 @@
 
     public Entradas Entradas { get; set; } = new Entradas();
 
-    public Productos Productos { get; set; } = new Productos();
+    public Productos Producto { get; set; } = new Productos();
 
     public EntradasDetalle EntradasDetalle { get; set; } = new EntradasDetalle();
 
@@ -103,7 +98,7 @@
         using var error = await httpClient.PostAsJsonAsync<Entradas>("api/Entradas", Entradas);
         if (!error.IsSuccessStatusCode)
         {
-            
+
             notificationService.ShowNotification(
                 titulo: "Error de Guardado",
                 mensaje: "El campo no se pudo guardar",
@@ -163,14 +158,13 @@
         this.EntradasDetalle = new EntradasDetalle();
     }
 
-    private void EliminarDetalle(int id)
+    private void EliminarDetalle(EntradasDetalle detalle)
     {
-        var detalle = this.Entradas.EntradasDetalles.FirstOrDefault(d => d.EntradaId == id);
+
         if (detalle != null)
         {
             this.Entradas.EntradasDetalles.Remove(detalle);
         }
     }
-
 
 }
