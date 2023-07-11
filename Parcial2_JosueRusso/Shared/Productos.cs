@@ -16,6 +16,6 @@ namespace Parcial2_JosueRusso.Shared
 
         public int Tipo { get; set; }
 
-        public float Existencia { get; set; }
+        public int Existencia { get; set; }
     }
 }
