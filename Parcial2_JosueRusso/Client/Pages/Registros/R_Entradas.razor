@@ -1,5 +1,13 @@
-﻿<h3>R_Entradas</h3>
+﻿@page "/Entradas"
+@page "/Entradas/{EntradasId:int}"
+@inject HttpClient httpClient
+@inject NotificationService notificationService
 
 @code {
+
+    public int EntradaId { get; set; }
+
+    public Entradas Entradas {}
+
 
 }
