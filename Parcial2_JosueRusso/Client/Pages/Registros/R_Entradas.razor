@@ -3,11 +3,69 @@
 @inject HttpClient httpClient
 @inject NotificationService notificationService
 
+<EditForm Model="Entradas" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header">
+                <h3>Entradas de Productos Empacados.</h3>
+            </div>
+            <div class=card-body>
+
+                <div class="col-xs-12 col-sm-12 col-md-8 col-lg-6 col-xl-4">
+                    @*EntradaId*@
+                    <label>Id:</label>
+                    <div class="input-group mb-3">
+                        <InputNumber @bind-Value="Entradas.EntradaId" class="form-control" aria-describedby="BotonBuscar" />
+                        <button @onclick="Buscar" class="btn btn-outline-primary" type="button" id="BotonBuscar"><i class="oi oi-magnifying-glass" /></button>
+                    </div>
+                </div>
+
+                @*Fecha*@
+                <div Class="form-group mt-3">
+                    <label class="row-text"> Fecha </label>
+                    <div class="input-group">
+                        <input type="date" @bind-value="Entradas.Fecha" />
+                        <ValidationMessage For="@(() => Entradas.Fecha)" />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="Concepto">Concepto:</label>
+                    <InputText @bind-Value="Entradas.Concepto" class="form-control" />
+                    <ValidationMessage For="@(() => Entradas.Concepto)" />
+                </div>
+
+
+
+
+
+
+                
+ 
+
+            </div>
+            <div class="card-footer d-flex justify-content-center">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-primary" @onclick="Nuevo">Nuevo <i class="oi oi-file" /></button>
+                    <button type="submit" class="btn btn-outline-success">Guardar <i class="oi oi-document" /></button>
+                    <button type="button" class="btn btn-outline-danger" @onclick="Eliminar">Eliminar <i class="oi oi-trash" /></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</EditForm>
+
 @code {
 
     public int EntradaId { get; set; }
 
     public Entradas Entradas { get; set; } = new Entradas();
+
+    public Productos Productos { get; set; } = new Productos();
 
     public EntradasDetalle EntradasDetalle { get; set; } = new EntradasDetalle();
 
@@ -40,20 +98,78 @@
         }
     }
 
-    public async void Guadar()
+    public async void Guardar()
     {
         using var error = await httpClient.PostAsJsonAsync<Entradas>("api/Entradas", Entradas);
         if (!error.IsSuccessStatusCode)
         {
-            return;
+            
             notificationService.ShowNotification(
                 titulo: "Error de Guardado",
                 mensaje: "El campo no se pudo guardar",
                 NotificationSeverity.Error
 
             );
+            return;
         }
+        var exito = await error.Content.ReadFromJsonAsync<Entradas>();
+        if (exito is not null)
+        {
+            this.Entradas = exito;
+            StateHasChanged();
+            notificationService.ShowNotification(
+                titulo: "Exito de Guardado",
+                mensaje: "El campo se ha guardar",
+                NotificationSeverity.Success
 
+            );
+        }
+    }
+    public void Nuevo()
+    {
+        this.Entradas = new Entradas();
+        detalleid = 0;
+        notificationService.ShowNotification(
+                titulo: "Nuevo",
+                mensaje: "Se a creado uno nuevo",
+                NotificationSeverity.Success
+
+            );
+    }
+
+    public async Task Eliminar()
+    {
+        using var eliminar = await httpClient.DeleteAsync($"api/Entradas/{Entradas.EntradaId}");
+        if (!eliminar.IsSuccessStatusCode)
+        {
+            notificationService.ShowNotification(
+                titulo: "Error a Eliminar",
+                mensaje: "El campo no se puedo eliminar",
+                NotificationSeverity.Error
+
+            );
+            return;
+        }
+        else
+        {
+            Nuevo();
+        }
+    }
+
+    private void AgregarDetalle()
+    {
+        this.EntradasDetalle.EntradaId = detalleid;
+        this.Entradas.EntradasDetalles.Add(this.EntradasDetalle);
+        this.EntradasDetalle = new EntradasDetalle();
+    }
+
+    private void EliminarDetalle(int id)
+    {
+        var detalle = this.Entradas.EntradasDetalles.FirstOrDefault(d => d.EntradaId == id);
+        if (detalle != null)
+        {
+            this.Entradas.EntradasDetalles.Remove(detalle);
+        }
     }
 
 
