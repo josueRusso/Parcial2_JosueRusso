@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33627.172
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parcial2_JosueRusso.Server", "Parcial2_JosueRusso\Server\Parcial2_JosueRusso.Server.csproj", "{F7137DDF-30D3-4769-B059-3BEB249F066D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parcial2_JosueRusso.Server", "Parcial2_JosueRusso\Server\Parcial2_JosueRusso.Server.csproj", "{F7137DDF-30D3-4769-B059-3BEB249F066D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parcial2_JosueRusso.Client", "Parcial2_JosueRusso\Client\Parcial2_JosueRusso.Client.csproj", "{B3BB7CF3-64A1-4AF0-968E-50387CA008FB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parcial2_JosueRusso.Client", "Parcial2_JosueRusso\Client\Parcial2_JosueRusso.Client.csproj", "{B3BB7CF3-64A1-4AF0-968E-50387CA008FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Parcial2_JosueRusso.Shared", "Parcial2_JosueRusso\Shared\Parcial2_JosueRusso.Shared.csproj", "{28E65B70-2E6B-408E-99F3-ECDB5C3DED3F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Parcial2_JosueRusso.Shared", "Parcial2_JosueRusso\Shared\Parcial2_JosueRusso.Shared.csproj", "{28E65B70-2E6B-408E-99F3-ECDB5C3DED3F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

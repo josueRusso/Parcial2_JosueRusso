@@ -28,7 +28,7 @@ namespace Parcial2_JosueRusso.Server.Controllers
             return await _context.Entradas.ToListAsync();
         }
 
-        [HttpGet("{ip}")]
+        [HttpGet("{id}")]
 
         public async Task<ActionResult<Entradas>> GetEntradas(int id)
         {
