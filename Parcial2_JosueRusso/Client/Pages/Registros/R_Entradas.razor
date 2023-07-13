@@ -45,7 +45,7 @@
                     <div class="row">
                         <div class="col-4">
                             <label for="SelectP">Producto:</label>
-                            <RadzenDropDown class="form-control" Data="@L_Productos.Where(p => p.ProductoId != 5)" TextProperty="Descripcion" ValueProperty="ProductoId" @bind-Value="@EntradasDetalle.ProductoId"></RadzenDropDown>
+                            <RadzenDropDown class="form-control" Data="@ProductoList.Where(p => p.ProductoId != 5)" TextProperty="Descripcion" ValueProperty="ProductoId" @bind-Value="@EntradasDetalle.ProductoId"></RadzenDropDown>
                         </div>
                         <div class="col-4">
                             <label for="CantidadP">Cantidad:</label>
@@ -69,7 +69,7 @@
                             {
                                 <tr>
                                     <td>@item.ProductoId</td>
-                                    <td>@L_Productos.FirstOrDefault(p => p.ProductoId == item.ProductoId)?.Descripcion</td>
+                                    <td>@ProductoList.FirstOrDefault(p => p.ProductoId == item.ProductoId)?.Descripcion</td>
                                     <td>@item.CantidadUtilizada</td>
                                     <td>
                                         <button class="btn btn-danger mr-2" onclick="@(() => EliminarDetalle(item))"><i class="oi oi-trash"></i></button>
@@ -91,7 +91,7 @@
                     <legend>Producido:</legend>
                     <div class="row">
                         <div class="col-3">
-                            <RadzenDropDown class="form-control" Data="@L_Productos" TextProperty="Descripcion" ValueProperty="ProductoId" @bind-Value="@Entradas.ProductoId"></RadzenDropDown>
+                            <RadzenDropDown class="form-control" Data="@ProductoList" TextProperty="Descripcion" ValueProperty="ProductoId" @bind-Value="@Entradas.ProductoId"></RadzenDropDown>
                         </div>
                         <div class="col-2">
                             <input @bind="@Entradas.CantidadProducida" type="text" class="form-control" placeholder="Cantidad" />
@@ -124,11 +124,11 @@
 
     public EntradasDetalle EntradasDetalle { get; set; } = new EntradasDetalle();
 
+    public List<Productos> ProductoList { get; set; } = new List<Productos>();
+
     public int Total { get; set; } = 0;
 
     public int Cantidad { get; set; }
-
-    public List<Productos> L_Productos { get; set; } = new List<Productos>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -136,34 +136,48 @@
 
         if (Productos is not null)
         {
-            L_Productos = Productos;
+            ProductoList = Productos;
         }
     }
 
     public void Nuevo()
     {
         Entradas = new Entradas();
+        Total = 0;
     }
 
     public async Task Buscar()
     {
-        //var buscar = await httpClient.GetFromJsonAsync<Entradas>($"api/Entradas/{Entradas.EntradaId}");
-        var buscar = await httpClient.GetFromJsonAsync<Entradas>($"api/Entradas/{Entradas.EntradaId}");
+        try
         {
+            int Suma = 0;
+            var buscar = await httpClient.GetFromJsonAsync<Entradas>($"api/Entradas/{Entradas.EntradaId}");
             if (buscar != null)
             {
                 this.Entradas = buscar;
-                StateHasChanged();
             }
             else
             {
                 notificationService.ShowNotification(
-                   titulo: "Éxito",
-                   mensaje: "buscado correctamente",
-                   NotificationSeverity.Success);
+                    titulo: "Error de búsqueda",
+                    mensaje: "Registro no encontrado",
+                    NotificationSeverity.Error);
+            }
+            foreach (var item in Entradas.EntradasDetalles)
+            {
+                Suma += (int)item.CantidadUtilizada;
+                Total = Suma;
             }
         }
+        catch (Exception ex)
+        {
+            notificationService.ShowNotification(
+                titulo: "Error de búsqueda",
+                mensaje: ex.Message,
+                NotificationSeverity.Error);
+        }
     }
+
 
     public bool Validar()
     {
@@ -240,6 +254,11 @@
         {
             if (!response.IsSuccessStatusCode)
             {
+
+                notificationService.ShowNotification(
+                    titulo: "Error al Eliminar",
+                    mensaje: "No se pudo eliminar",
+                    NotificationSeverity.Error);
                 return;
             }
             else
@@ -249,44 +268,60 @@
         }
     }
 
-    private async Task<Entradas> BuscarEntradas(int EntradaId)
+    private async Task<Productos> BuscarEntradas(int ProductoId)
     {
-        Entradas entradas = new Entradas();
-        var entradaEncontrada = await httpClient.GetFromJsonAsync<Entradas>($"api/Entradas/{EntradaId}");
+        var producto = await httpClient.GetFromJsonAsync<Productos>($"api/Productos/{ProductoId}");
 
-        if (entradaEncontrada != null)
+        if (producto == null)
         {
-            return entradas = entradaEncontrada;
+            return new Productos();
         }
-        else
-        {
-            return new Entradas();
-        }
+
+        return producto;
     }
 
-    public void AgregarDetalle()
+
+    public async Task AgregarDetalle()
     {
         if (ValidarDetalle())
         {
+            if (EntradasDetalle.CantidadUtilizada <= 0)
+            {
+                notificationService.ShowNotification(titulo: "Error", mensaje: "La cantidad a utilizar debe ser mayor que cero", NotificationSeverity.Warning);
+                return;
+            }
+
+            var producto = await BuscarEntradas(EntradasDetalle.ProductoId);
+
             if (Entradas != null)
             {
-                EntradasDetalle.EntradaId = Entradas.EntradaId;
+                int Suma = 0;
 
+                if (EntradasDetalle.CantidadUtilizada > producto.Existencia)
+                {
+                    notificationService.ShowNotification(titulo: "Error", mensaje: "La cantidad a utilizar es mayor que la existencia del producto", NotificationSeverity.Warning);
+                    return;
+                }
+
+                EntradasDetalle.EntradaId = Entradas.EntradaId;
                 Entradas.EntradasDetalles.Add(EntradasDetalle);
                 EntradasDetalle = new EntradasDetalle();
+
+                foreach (var item in Entradas.EntradasDetalles)
+                {
+                    Suma += (int)item.CantidadUtilizada;
+                    Total = Suma;
+                }
+                Entradas.CantidadProducida = Total * 2;
             }
         }
     }
 
-    public void EliminarDetalle(EntradasDetalle detalle)
+    public void EliminarDetalle(EntradasDetalle entradasDetalle)
     {
-        var detalleEncontrado = Entradas.EntradasDetalles.FirstOrDefault(e => e.DetalleId == detalle.DetalleId);
+        this.Entradas.EntradasDetalles.Remove(entradasDetalle);
 
-        if (detalleEncontrado != null)
-        {
-            var entrada = BuscarEntradas(detalleEncontrado.ProductoId);
-            detalle = detalleEncontrado;
-            Entradas.EntradasDetalles.Remove(detalle);
-        }
+        Total = this.Entradas.EntradasDetalles.Sum(t => (int)t.CantidadUtilizada);
+        Entradas.CantidadProducida = Total * 2;
     }
 }

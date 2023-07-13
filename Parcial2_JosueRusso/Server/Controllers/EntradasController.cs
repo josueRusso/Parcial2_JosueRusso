@@ -36,7 +36,7 @@ namespace Parcial2_JosueRusso.Server.Controllers
             {
                 return NotFound();
             }
-            var entrada = await _context.Entradas.Include(e => e.EntradasDetalles).Where( e => e.EntradaId == id).FirstOrDefaultAsync();
+            var entrada = await _context.Entradas.Include(e => e.EntradasDetalles).Where(e => e.EntradaId == id).FirstOrDefaultAsync();
             if (entrada == null)
             {
                 return NotFound();
@@ -44,19 +44,19 @@ namespace Parcial2_JosueRusso.Server.Controllers
             return entrada;
         }
 
-        public bool EntradasExiste (int id)
+        public bool EntradasExiste(int id)
         {
             return (_context.Entradas?.Any(e => e.EntradaId == id)).GetValueOrDefault();
         }
-        
+
         [HttpPost]
 
         public async Task<ActionResult<Entradas>> PostEntradas(Entradas entradas)
         {
             if (!EntradasExiste(entradas.EntradaId))
             {
-                Productos? producto; 
-                foreach(var consumido in entradas.EntradasDetalles)
+                Productos? producto;
+                foreach (var consumido in entradas.EntradasDetalles)
                 {
                     producto = _context.Productos.Find(consumido.ProductoId);
                     producto.Existencia -= (int)consumido.CantidadUtilizada;
@@ -98,35 +98,40 @@ namespace Parcial2_JosueRusso.Server.Controllers
             await _context.SaveChangesAsync();
             _context.Entry(entradas).State = EntityState.Detached;
             return Ok(entradas);
-                    
+
         }
 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteEntradas(int id)
+        [HttpDelete("{EntradaId}")]
+        public async Task<IActionResult> EliminarEntrada(int EntradaId)
         {
-            if(_context.Entradas == null)
-            {
-                return NotFound();
-            }
-            var entrada = await _context.Entradas.FindAsync(id);
+            var entrada = await _context.Entradas.Include(e => e.EntradasDetalles).FirstOrDefaultAsync(e => e.EntradaId == EntradaId);
+
             if (entrada == null)
             {
                 return NotFound();
             }
-            Productos? producto;
-            foreach (var consumido in entrada.EntradasDetalles)
+
+            foreach (var detalle in entrada.EntradasDetalles)
             {
-                producto = _context.Productos.Find(consumido.ProductoId);
-                producto.Existencia += (int)consumido.CantidadUtilizada;
-                _context.Entry(producto).State = EntityState.Modified;
+                var producto = await _context.Productos.FindAsync(detalle.ProductoId);
+
+                if (producto != null)
+                {
+                    producto.Existencia += (int)detalle.CantidadUtilizada;
+                    _context.Productos.Update(producto);
+                }
             }
-            producto = _context.Productos.Find(entrada.ProductoId);
-            producto.Existencia -= entrada.CantidadProducida;
-            _context.Entry(producto).State = EntityState.Modified;
-            _context.Database.ExecuteSqlRaw($"Delete from EntradasDetalles where EntradaId = {entrada.EntradaId}");
+
+            var productoPrincipal = await _context.Productos.FindAsync(entrada.ProductoId);
+
+            if (productoPrincipal != null)
+            {
+                productoPrincipal.Existencia += entrada.CantidadProducida;
+                _context.Productos.Update(productoPrincipal);
+            }
+
             _context.Entradas.Remove(entrada);
             await _context.SaveChangesAsync();
-            _context.Entry(entrada).State = EntityState.Detached;
 
             return NoContent();
         }
