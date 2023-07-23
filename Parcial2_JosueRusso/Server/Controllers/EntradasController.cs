@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Parcial2_JosueRusso.Server.DAL;
 using Parcial2_JosueRusso.Shared;
+using System.Text.RegularExpressions;
 
 namespace Parcial2_JosueRusso.Server.Controllers
 {
@@ -53,6 +54,10 @@ namespace Parcial2_JosueRusso.Server.Controllers
 
         public async Task<ActionResult<Entradas>> PostEntradas(Entradas entradas)
         {
+                //Recorre cada detalle de la entrada(entradas.EntradasDetalles) 
+                //para actualizar la cantidad de existencias de los productos relacionados
+                //(_context.Productos). Resta la cantidad utilizada en el detalle de la entrada de la cantidad de existencias del producto.
+                //Luego, marca las entidades modificadas para su posterior persistencia en la base de datos.
             if (!EntradasExiste(entradas.EntradaId))
             {
                 Productos? producto;
@@ -67,6 +72,22 @@ namespace Parcial2_JosueRusso.Server.Controllers
                 _context.Entradas.Add(entradas);
             }
             else
+
+                //Para cada detalle de la entrada anterior, 
+                //actualiza la cantidad de existencias del producto.
+                //Suma la cantidad utilizada en el detalle de la entrada anterior a la cantidad de existencias del producto. 
+                //Luego, marca las entidades modificadas para  la base de datos.
+                //Actualiza la cantidad de existencias del producto con la entrada anterior. 
+                //Resta la cantidad producida en la entrada anterior de la cantidad de existencias del producto y marca la entidad como modificada.
+                //Elimina los detalles de la entrada anterior(EntradasDetalles) de la base de datos.
+                //Para cada detalle de la nueva entrada(entradas.EntradasDetalles), 
+                //actualiza la cantidad de existencias del producto relacionado. 
+                //Resta la cantidad utilizada en el detalle de la nueva entrada de la cantidad de existencias del producto. 
+                //Luego, marca las entidades modificadas para su posterior persistencia en la base de datos.
+                //Actualiza la cantidad de existencias del producto relacionado con la nueva entrada. 
+                //Suma la cantidad producida en la nueva entrada a la cantidad de existencias del producto y marca la entidad como modificada.
+                //Actualiza la entrada en la base de datos con los cambios realizados en la nueva entrada(entradas).
+
             {
                 var entradaAnterior = _context.Entradas
                     .Include(e => e.EntradasDetalles)
