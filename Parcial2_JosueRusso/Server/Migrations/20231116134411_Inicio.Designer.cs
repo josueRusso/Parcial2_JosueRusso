@@ -11,7 +11,7 @@ using Parcial2_JosueRusso.Server.DAL;
 namespace Parcial2_JosueRusso.Server.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20230711005256_Inicio")]
+    [Migration("20231116134411_Inicio")]
     partial class Inicio
     {
         /// <inheritdoc />
@@ -36,9 +36,6 @@ namespace Parcial2_JosueRusso.Server.Migrations
                     b.Property<DateTime>("Fecha")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("PesoTotal")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("ProductoId")
                         .HasColumnType("INTEGER");
 
@@ -53,13 +50,10 @@ namespace Parcial2_JosueRusso.Server.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<double>("CantidadUtilizada")
-                        .HasColumnType("REAL");
-
-                    b.Property<int>("EntradaId")
+                    b.Property<int>("CantidadUtilizada")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int?>("EntradasDetalle")
+                    b.Property<int>("EntradaId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("ProductoId")
@@ -67,7 +61,7 @@ namespace Parcial2_JosueRusso.Server.Migrations
 
                     b.HasKey("DetalleId");
 
-                    b.HasIndex("EntradasDetalle");
+                    b.HasIndex("EntradaId");
 
                     b.ToTable("EntradasDetalle");
                 });
@@ -85,8 +79,11 @@ namespace Parcial2_JosueRusso.Server.Migrations
                     b.Property<int>("Existencia")
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Tipo")
-                        .HasColumnType("INTEGER");
+                    b.Property<double>("PrecioCompra")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PrecioVenta")
+                        .HasColumnType("REAL");
 
                     b.HasKey("ProductoId");
 
@@ -97,63 +94,72 @@ namespace Parcial2_JosueRusso.Server.Migrations
                         {
                             ProductoId = 1,
                             Descripcion = "Mani",
-                            Existencia = 50,
-                            Tipo = 0
+                            Existencia = 250,
+                            PrecioCompra = 8.0,
+                            PrecioVenta = 15.0
                         },
                         new
                         {
                             ProductoId = 2,
-                            Descripcion = "Pistacho",
-                            Existencia = 600,
-                            Tipo = 0
+                            Descripcion = "Pistachos",
+                            Existencia = 300,
+                            PrecioCompra = 15.0,
+                            PrecioVenta = 30.0
                         },
                         new
                         {
                             ProductoId = 3,
                             Descripcion = "Pasas",
-                            Existencia = 500,
-                            Tipo = 0
+                            Existencia = 130,
+                            PrecioCompra = 10.0,
+                            PrecioVenta = 25.0
                         },
                         new
                         {
                             ProductoId = 4,
                             Descripcion = "Ciruelas",
-                            Existencia = 700,
-                            Tipo = 0
+                            Existencia = 350,
+                            PrecioCompra = 25.0,
+                            PrecioVenta = 50.0
                         },
                         new
                         {
                             ProductoId = 5,
-                            Descripcion = "Mixto MPP 0.5 lb",
-                            Existencia = 0,
-                            Tipo = 0
+                            Descripcion = "Mixto MPP",
+                            Existencia = 320,
+                            PrecioCompra = 30.0,
+                            PrecioVenta = 60.0
                         },
                         new
                         {
                             ProductoId = 6,
-                            Descripcion = "Mixto MPC 0.5 lb",
-                            Existencia = 0,
-                            Tipo = 0
+                            Descripcion = "Mixto MPC",
+                            Existencia = 310,
+                            PrecioCompra = 30.0,
+                            PrecioVenta = 60.0
                         },
                         new
                         {
                             ProductoId = 7,
-                            Descripcion = "Mixto MPP 0.2 lb",
-                            Existencia = 0,
-                            Tipo = 0
+                            Descripcion = "Mixto MPP",
+                            Existencia = 250,
+                            PrecioCompra = 25.0,
+                            PrecioVenta = 50.0
                         });
                 });
 
             modelBuilder.Entity("Parcial2_JosueRusso.Shared.EntradasDetalle", b =>
                 {
                     b.HasOne("Parcial2_JosueRusso.Shared.Entradas", null)
-                        .WithMany("EntradasDetalles")
-                        .HasForeignKey("EntradasDetalle");
+                        .WithMany("entradasDetalle")
+                        .HasForeignKey("EntradaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Parcial2_JosueRusso.Shared.Entradas", b =>
                 {
-                    b.Navigation("EntradasDetalles");
+                    b.Navigation("entradasDetalle");
                 });
 #pragma warning restore 612, 618
         }

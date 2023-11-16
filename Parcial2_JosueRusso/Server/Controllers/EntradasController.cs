@@ -18,137 +18,166 @@ namespace Parcial2_JosueRusso.Server.Controllers
             _context = context;
         }
 
-        [HttpGet]
-
-        public async Task<ActionResult<IEnumerable<Entradas>>> GetEntradas()
+        public bool Existe(int EntradaId)
         {
-            if (_context.Entradas == null)
-            {
-                return NotFound();
-            }
-            return await _context.Entradas.ToListAsync();
+            return (_context.Entradas?.Any(e => e.EntradaId == EntradaId)).GetValueOrDefault();
         }
 
-        [HttpGet("{id}")]
-
-        public async Task<ActionResult<Entradas>> GetEntradas(int id)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Entradas>>> Obtener()
         {
             if (_context.Entradas == null)
             {
                 return NotFound();
             }
-            var entrada = await _context.Entradas.Include(e => e.EntradasDetalles).Where(e => e.EntradaId == id).FirstOrDefaultAsync();
+            else
+            {
+                return await _context.Entradas.ToListAsync();
+            }
+        }
+
+        [HttpGet("{EntradaId}")]
+        public async Task<ActionResult<Entradas>> ObtenerEntradas(int EntradaId)
+        {
+            if (_context.Entradas == null)
+            {
+                return NotFound();
+            }
+
+            var entrada = await _context.Entradas.Include(e => e.entradasDetalle).Where(e => e.EntradaId == EntradaId).FirstOrDefaultAsync();
+
             if (entrada == null)
             {
                 return NotFound();
             }
+
+            foreach (var item in entrada.entradasDetalle)
+            {
+                Console.WriteLine($"{item.DetalleId}, {item.EntradaId}, {item.ProductoId}, {item.CantidadUtilizada}");
+            }
+
             return entrada;
         }
 
-        public bool EntradasExiste(int id)
-        {
-            return (_context.Entradas?.Any(e => e.EntradaId == id)).GetValueOrDefault();
-        }
-
         [HttpPost]
-
         public async Task<ActionResult<Entradas>> PostEntradas(Entradas entradas)
         {
-                //Recorre cada detalle de la entrada(entradas.EntradasDetalles) 
-                //para actualizar la cantidad de existencias de los productos relacionados
-                //(_context.Productos). Resta la cantidad utilizada en el detalle de la entrada de la cantidad de existencias del producto.
-                //Luego, marca las entidades modificadas para su posterior persistencia en la base de datos.
-            if (!EntradasExiste(entradas.EntradaId))
+            if (!Existe(entradas.EntradaId))
             {
-                Productos? producto;
-                foreach (var consumido in entradas.EntradasDetalles)
+                Productos? producto = new Productos();
+                foreach (var productoConsumido in entradas.entradasDetalle)
                 {
-                    producto = _context.Productos.Find(consumido.ProductoId);
-                    producto.Existencia -= (int)consumido.CantidadUtilizada;
-                    _context.Entry(producto).State = EntityState.Modified;
-                    _context.Entry(consumido).State = EntityState.Added;
+                    producto = _context.Productos.Find(productoConsumido.ProductoId);
 
+                    if (producto != null)
+                    {
+                        producto.Existencia -= productoConsumido.CantidadUtilizada;
+                        _context.Productos.Update(producto);
+                        await _context.SaveChangesAsync();
+                        _context.Entry(producto).State = EntityState.Detached;
+                    }
                 }
-                _context.Entradas.Add(entradas);
+                await _context.Entradas.AddAsync(entradas);
             }
             else
-
-                //Para cada detalle de la entrada anterior, 
-                //actualiza la cantidad de existencias del producto.
-                //Suma la cantidad utilizada en el detalle de la entrada anterior a la cantidad de existencias del producto. 
-                //Luego, marca las entidades modificadas para  la base de datos.
-                //Actualiza la cantidad de existencias del producto con la entrada anterior. 
-                //Resta la cantidad producida en la entrada anterior de la cantidad de existencias del producto y marca la entidad como modificada.
-                //Elimina los detalles de la entrada anterior(EntradasDetalles) de la base de datos.
-                //Para cada detalle de la nueva entrada(entradas.EntradasDetalles), 
-                //actualiza la cantidad de existencias del producto relacionado. 
-                //Resta la cantidad utilizada en el detalle de la nueva entrada de la cantidad de existencias del producto. 
-                //Luego, marca las entidades modificadas para su posterior persistencia en la base de datos.
-                //Actualiza la cantidad de existencias del producto relacionado con la nueva entrada. 
-                //Suma la cantidad producida en la nueva entrada a la cantidad de existencias del producto y marca la entidad como modificada.
-                //Actualiza la entrada en la base de datos con los cambios realizados en la nueva entrada(entradas).
-
             {
-                var entradaAnterior = _context.Entradas
-                    .Include(e => e.EntradasDetalles)
-                    .AsNoTracking()
-                    .FirstOrDefault(e => e.EntradaId == entradas.EntradaId);
-                Productos? producto;
-                foreach (var consumido in entradaAnterior.EntradasDetalles)
+                var entradaAnterior = _context.Entradas.Include(e => e.entradasDetalle).AsNoTracking()
+                .FirstOrDefault(e => e.EntradaId == entradas.EntradaId);
+
+                Productos? producto = new Productos();
+
+                if (entradaAnterior != null && entradaAnterior.entradasDetalle != null)
                 {
-                    producto = _context.Productos.Find(consumido.ProductoId);
-                    producto.Existencia += (int)consumido.CantidadUtilizada;
-                    _context.Entry(producto).State = EntityState.Modified;
+                    foreach (var productoConsumido in entradaAnterior.entradasDetalle)
+                    {
+                        if (productoConsumido != null)
+                        {
+                            producto = _context.Productos.Find(productoConsumido.ProductoId);
+
+                            if (producto != null)
+                            {
+                                producto.Existencia += productoConsumido.CantidadUtilizada;
+                                _context.Productos.Update(producto);
+                                await _context.SaveChangesAsync();
+                                _context.Entry(producto).State = EntityState.Detached;
+                            }
+                        }
+                    }
                 }
-                producto = _context.Productos.Find(entradaAnterior.ProductoId);
-                producto.Existencia -= entradaAnterior.CantidadProducida;
-                _context.Entry(producto).State = EntityState.Modified;
-                _context.Database.ExecuteSqlRaw($"Delete from EntradasDetalles where EntradaId = {entradas.EntradaId}");
-                foreach (var consumido in entradas.EntradasDetalles)
+
+                if (entradaAnterior != null)
                 {
-                    producto = _context.Productos.Find(consumido.ProductoId);
-                    producto.Existencia -= (int)consumido.CantidadUtilizada;
-                    _context.Entry(producto).State = EntityState.Modified;
-                    _context.Entry(consumido).State = EntityState.Added;
+                    producto = _context.Productos.Find(entradaAnterior.ProductoId);
+
+                    if (producto != null)
+                    {
+                        producto.Existencia -= entradaAnterior.CantidadProducida;
+                        _context.Productos.Update(producto);
+                        await _context.SaveChangesAsync();
+                        _context.Entry(producto).State = EntityState.Detached;
+                    }
                 }
+
+                _context.Database.ExecuteSqlRaw($"Delete from entradasDetalle where EntradaId = {entradas.EntradaId}");
+
+                foreach (var productoConsumido in entradas.entradasDetalle)
+                {
+                    producto = _context.Productos.Find(productoConsumido.ProductoId);
+
+                    if (producto != null)
+                    {
+                        producto.Existencia -= productoConsumido.CantidadUtilizada;
+                        _context.Productos.Update(producto);
+                        await _context.SaveChangesAsync();
+                        _context.Entry(producto).State = EntityState.Detached;
+                        _context.Entry(productoConsumido).State = EntityState.Added;
+                    }
+                }
+
                 producto = _context.Productos.Find(entradas.ProductoId);
-                producto.Existencia += entradas.CantidadProducida;
-                _context.Entry(producto).State = EntityState.Modified;
+
+                if (producto != null)
+                {
+                    producto.Existencia += entradas.CantidadProducida;
+                    _context.Productos.Update(producto);
+                    await _context.SaveChangesAsync();
+                    _context.Entry(producto).State = EntityState.Detached;
+                }
                 _context.Entradas.Update(entradas);
             }
+
             await _context.SaveChangesAsync();
             _context.Entry(entradas).State = EntityState.Detached;
             return Ok(entradas);
-
         }
 
         [HttpDelete("{EntradaId}")]
         public async Task<IActionResult> EliminarEntrada(int EntradaId)
         {
-            var entrada = await _context.Entradas.Include(e => e.EntradasDetalles).FirstOrDefaultAsync(e => e.EntradaId == EntradaId);
+            var entrada = await _context.Entradas.Include(e => e.entradasDetalle).FirstOrDefaultAsync(e => e.EntradaId == EntradaId);
 
             if (entrada == null)
             {
                 return NotFound();
             }
 
-            foreach (var detalle in entrada.EntradasDetalles)
+            foreach (var productoConsumido in entrada.entradasDetalle)
             {
-                var producto = await _context.Productos.FindAsync(detalle.ProductoId);
+                var producto = await _context.Productos.FindAsync(productoConsumido.ProductoId);
 
                 if (producto != null)
                 {
-                    producto.Existencia += (int)detalle.CantidadUtilizada;
+                    producto.Existencia += productoConsumido.CantidadUtilizada;
                     _context.Productos.Update(producto);
                 }
             }
 
-            var productoPrincipal = await _context.Productos.FindAsync(entrada.ProductoId);
+            var productoInicial = await _context.Productos.FindAsync(entrada.ProductoId);
 
-            if (productoPrincipal != null)
+            if (productoInicial != null)
             {
-                productoPrincipal.Existencia += entrada.CantidadProducida;
-                _context.Productos.Update(productoPrincipal);
+                productoInicial.Existencia += entrada.CantidadProducida;
+                _context.Productos.Update(productoInicial);
             }
 
             _context.Entradas.Remove(entrada);
@@ -156,5 +185,6 @@ namespace Parcial2_JosueRusso.Server.Controllers
 
             return NoContent();
         }
+
     }
 }

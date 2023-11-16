@@ -21,7 +21,6 @@ namespace Parcial2_JosueRusso.Server.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Fecha = table.Column<DateTime>(type: "TEXT", nullable: false),
                     Concepto = table.Column<string>(type: "TEXT", nullable: false),
-                    PesoTotal = table.Column<int>(type: "INTEGER", nullable: false),
                     ProductoId = table.Column<int>(type: "INTEGER", nullable: false),
                     CantidadProducida = table.Column<int>(type: "INTEGER", nullable: false)
                 },
@@ -37,7 +36,8 @@ namespace Parcial2_JosueRusso.Server.Migrations
                     ProductoId = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Descripcion = table.Column<string>(type: "TEXT", nullable: false),
-                    Tipo = table.Column<int>(type: "INTEGER", nullable: false),
+                    PrecioCompra = table.Column<double>(type: "REAL", nullable: false),
+                    PrecioVenta = table.Column<double>(type: "REAL", nullable: false),
                     Existencia = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
@@ -53,37 +53,37 @@ namespace Parcial2_JosueRusso.Server.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     EntradaId = table.Column<int>(type: "INTEGER", nullable: false),
                     ProductoId = table.Column<int>(type: "INTEGER", nullable: false),
-                    CantidadUtilizada = table.Column<double>(type: "REAL", nullable: false),
-                    EntradasDetalle = table.Column<int>(type: "INTEGER", nullable: true)
+                    CantidadUtilizada = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_EntradasDetalle", x => x.DetalleId);
                     table.ForeignKey(
-                        name: "FK_EntradasDetalle_Entradas_EntradasDetalle",
-                        column: x => x.EntradasDetalle,
+                        name: "FK_EntradasDetalle_Entradas_EntradaId",
+                        column: x => x.EntradaId,
                         principalTable: "Entradas",
-                        principalColumn: "EntradaId");
+                        principalColumn: "EntradaId",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.InsertData(
                 table: "Productos",
-                columns: new[] { "ProductoId", "Descripcion", "Existencia", "Tipo" },
+                columns: new[] { "ProductoId", "Descripcion", "Existencia", "PrecioCompra", "PrecioVenta" },
                 values: new object[,]
                 {
-                    { 1, "Mani", 50, 0 },
-                    { 2, "Pistacho", 600, 0 },
-                    { 3, "Pasas", 500, 0 },
-                    { 4, "Ciruelas", 700, 0 },
-                    { 5, "Mixto MPP 0.5 lb", 0, 0 },
-                    { 6, "Mixto MPC 0.5 lb", 0, 0 },
-                    { 7, "Mixto MPP 0.2 lb", 0, 0 }
+                    { 1, "Mani", 250, 8.0, 15.0 },
+                    { 2, "Pistachos", 300, 15.0, 30.0 },
+                    { 3, "Pasas", 130, 10.0, 25.0 },
+                    { 4, "Ciruelas", 350, 25.0, 50.0 },
+                    { 5, "Mixto MPP", 320, 30.0, 60.0 },
+                    { 6, "Mixto MPC", 310, 30.0, 60.0 },
+                    { 7, "Mixto MPP", 250, 25.0, 50.0 }
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_EntradasDetalle_EntradasDetalle",
+                name: "IX_EntradasDetalle_EntradaId",
                 table: "EntradasDetalle",
-                column: "EntradasDetalle");
+                column: "EntradaId");
         }
 
         /// <inheritdoc />
